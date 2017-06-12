@@ -6,28 +6,21 @@ from configparser import ConfigParser
 def create_con():
     """
     Use address and port number connect to Neo4j,everytime you use it,it create a new instance with session
-    :return:A session object
+    :return:A connection object
     """
     cfg = ConfigParser()
     cfg.read('config.ini')
     db_section = 'Neo4j'
-    auth_section = 'Auth'
     try:
         # Fetch db info
-        db = cfg.options(db_section)
-        address = cfg.get(db_section, db[0])
-        port = cfg.get(db_section, db[1])
-
-        # Fetch auth info
-        auth = cfg.options(auth_section)
-        user = cfg.get(auth_section, auth[0])
-        passwd = cfg.get(auth_section, auth[1])
-
+        address = cfg.get(db_section, 'address')
+        port = cfg.get(db_section, 'port')
+        user = cfg.get(db_section, 'user')
+        passwd = cfg.get(db_section, 'passwd')
         # Connect
         driver = GraphDatabase.driver(
             "bolt://%s:%s" % (address, port), auth=basic_auth(user, passwd))
-        session = driver.session()
-        return session
+        return driver
     except Exception as err:
         print(err)
 
@@ -50,5 +43,9 @@ def run_model(session, model, data=None):
     :param data: The data you want to use in model,usually use dict as input
     :return: A result list
     """
-    result = session.run(model, data)
-    return result
+    if data:
+        result = session.run(model, data)
+        return result
+    else:
+        result = session.run(model)
+        return result
