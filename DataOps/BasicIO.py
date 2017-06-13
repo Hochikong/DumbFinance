@@ -20,7 +20,7 @@ file,collection and document ops use OBJ_ACTION style func name
 """
 
 
-def store_xls(col, files, labels):
+def xls_store(col, files, labels):
     """
     Read xls file by pandas and store in MongoDB
     :param col: Collection object
