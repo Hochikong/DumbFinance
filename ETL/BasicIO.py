@@ -19,6 +19,8 @@ connection and db level ops use ACTION_OBJ style func name
 file,collection and document ops use OBJ_ACTION style func name
 """
 
+CONFIG_PATH = 'config.ini'
+DEFAULT_SECTION = 'DB'
 
 def xls_store(col, files, labels):
     """
@@ -41,16 +43,14 @@ def xls_store(col, files, labels):
 
 def create_con():
     """
-    Use address and port number connect to MongoDB,everytime you use it,it create a new instance
+    Use address and port number connect to MongoDB,every time you use it,it create a new instance
     :return: A connection object
     """
     cfg = ConfigParser()
-    cfg.read('config.ini')
-    default_section = 'DB'
+    cfg.read(CONFIG_PATH)
     try:
-        options = cfg.options(default_section)
-        address = cfg.get(default_section, options[0])
-        port = int(cfg.get(default_section, options[1]))
+        address = cfg.get(DEFAULT_SECTION, 'address')
+        port = int(cfg.get(DEFAULT_SECTION, 'port'))
         cli = MongoClient(address, port)
         return cli
     except Exception as err:
@@ -86,7 +86,7 @@ def col_ops(db, colname, ops):
         db.drop_collection(colname)
         return 'Delete successfully'
     else:
-        return 'Wrong ops!'
+        return 'Wrong ops'
 
 
 def doc_insert(col, doc):

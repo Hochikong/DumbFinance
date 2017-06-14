@@ -8,10 +8,10 @@ from os import getenv
 This program used for NLP ops,you can use jieba_config() to configurate.And you can use BosonNLP NER service
 with sen_ner(),but first you should use sen_cut() to create a input data.
 """
-
+TOKEN = 'BOSON_TOKEN'
 
 # Initial the BosonNLP instance
-nlp = BosonNLP(getenv('BOSON_TOKEN'))
+nlp = BosonNLP(getenv(TOKEN))
 
 
 def jieba_config(
@@ -37,13 +37,13 @@ def jieba_config(
             for word in wordlist:
                 add_word(word)
         else:
-            return 'Wordlist require!'
+            return 'Wordlist require'
     elif config == 'D':
         if wordlist:
             for word in wordlist:
                 del_word(word)
         else:
-            return 'Wordlist require!'
+            return 'Wordlist require'
     else:
         return 'Invalid config content'
     if parallel:

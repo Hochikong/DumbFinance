@@ -2,6 +2,9 @@
 from neo4j.v1 import GraphDatabase, basic_auth
 from configparser import ConfigParser
 
+CONFIG_PATH = 'config.ini'
+DB_SECTION = 'Neo4j'
+
 
 def create_con():
     """
@@ -9,14 +12,13 @@ def create_con():
     :return:A connection object
     """
     cfg = ConfigParser()
-    cfg.read('config.ini')
-    db_section = 'Neo4j'
+    cfg.read(CONFIG_PATH)
     try:
         # Fetch db info
-        address = cfg.get(db_section, 'address')
-        port = cfg.get(db_section, 'port')
-        user = cfg.get(db_section, 'user')
-        passwd = cfg.get(db_section, 'passwd')
+        address = cfg.get(DB_SECTION, 'address')
+        port = cfg.get(DB_SECTION, 'port')
+        user = cfg.get(DB_SECTION, 'user')
+        passwd = cfg.get(DB_SECTION, 'passwd')
         # Connect
         driver = GraphDatabase.driver(
             "bolt://%s:%s" % (address, port), auth=basic_auth(user, passwd))
