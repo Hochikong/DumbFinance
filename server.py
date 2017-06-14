@@ -76,7 +76,21 @@ class CypherIO(Base):
         self.__connection = BasicGraph.create_con()
         self.__session = self.__connection.session()
 
-    def query(self,model,data=None):
+    def run(self,model,data=None):
+        """
+        Execute Cypher query and other operations
+        :param model: A Cypher model
+        :param data: Cypher data
+        :return: A dict result
+        """
+        if data:
+            result = BasicGraph.run_model(self.__session,model,data)
+            return result
+        else:
+            result = BasicGraph.run_model(self.__session,model)
+            return (result,model)
+
+
 
 
 
