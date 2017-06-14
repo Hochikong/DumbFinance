@@ -2,6 +2,7 @@ from ETL.BasicIO import create_con,select_db,col_ops,doc_insert,doc_find,close_c
 from ETL.NLPlib import jieba_config,sen_cut,sen_ner
 from configparser import ConfigParser
 from Feedback import BasicGraph
+from copy import deepcopy
 
 CONFIG_PATH = 'config.ini'
 ETL_SECTION = 'ETL'
@@ -85,10 +86,43 @@ class CypherIO(Base):
         """
         if data:
             result = BasicGraph.run_model(self.__session,model,data)
-            return result
+            return {'result':result,'model':model,'data':data}
         else:
             result = BasicGraph.run_model(self.__session,model)
-            return (result,model)
+            return result
+
+def remove_punctuation(data):
+    """
+    Remove all punctuation in the result of sen_cut()
+
+    As you see this result,I must remove the punctuation before use sen_ner()
+    [ {'tag': ['v', 'x', 'x', 'b', 'x', 'x', 'x', 'x', 'x', 'r', 'n', 'd', 'c', 'n',
+    'm', 'n', 'x'], 'word': ['例如', '，', '“', '副', '”', '（', 'f', 'ù', '）',
+    '这个', '字', '就', '可以', '代表', '三个', '语素', '：']}]
+
+    After this func:
+    [{'tag': ['v', 'b', 'r', 'n', 'd', 'c', 'n', 'm', 'n'],
+    'word': ['例如', '副', '这个', '字', '就', '可以', '代表', '三个', '语素']}]
+
+    :param data: A list from sen_cut()
+    :return: A new list without punctuation
+    """
+    COND = 'x'
+    replica = deepcopy(data)
+    while True:
+        if COND in replica[0]['tag']:
+            p = replica[0]['tag'].index(COND)
+            replica[0]['tag'].remove(COND)
+            # print(replica[0]['tag'])
+            del(replica[0]['word'][p])
+            # print(replica[0]['word'])
+        else:
+            break
+    return replica
+
+
+
+
 
 
 
