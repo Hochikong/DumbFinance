@@ -1,5 +1,5 @@
-from ETL.BasicIO import create_con,select_db,col_ops,doc_insert,doc_find,close_con,xls_store
-from ETL.NLPlib import jieba_config,sen_cut,sen_ner
+from ETL.BasicIO import create_con, select_db, col_ops, doc_insert, doc_find, close_con, xls_store
+from ETL.NLPlib import jieba_config, sen_cut, sen_ner
 from configparser import ConfigParser
 from Feedback import BasicGraph
 from copy import deepcopy
@@ -8,21 +8,23 @@ CONFIG_PATH = 'config.ini'
 ETL_SECTION = 'ETL'
 SERVICE_SECTION = 'Service'
 
+
 class Base(object):  # Base class
     def __init__(self):
         self.__cfg = ConfigParser()
         self.__cfg.read(CONFIG_PATH)
 
+
 class WordIO(Base):
     def __init__(self):
-        super(WordIO,self).__init__()
+        super(WordIO, self).__init__()
         self.__connection = create_con()  # Inital database connnection
         self.__database = False
         self.__collection = False
         self.__db_name = False
         self.__collection_name = False
 
-    def read(self,from_db,from_collection,condition=False):
+    def read(self, from_db, from_collection, condition=False):
         """
         Get data from MongoDB
         :param from_db: Which database data come from,a string
@@ -32,15 +34,15 @@ class WordIO(Base):
         """
         self.__db_name = from_db
         self.__collection_name = from_collection
-        self.__database = select_db(self.__connection,from_db)
-        self.__collection = col_ops(self.__database,from_collection,'G')
+        self.__database = select_db(self.__connection, from_db)
+        self.__collection = col_ops(self.__database, from_collection, 'G')
         if condition:
-            result = doc_find(self.__collection,condition,'multi')
+            result = doc_find(self.__collection, condition, 'multi')
         else:
-            result = doc_find(self.__collection,types='multi')
+            result = doc_find(self.__collection, types='multi')
         return result
 
-    def write(self,to_db,to_collection,data):
+    def write(self, to_db, to_collection, data):
         """
         Write data to MongoDB
         :param to_db: Which database you want to store data
@@ -50,19 +52,21 @@ class WordIO(Base):
         """
         if to_db == self.__db_name:
             if to_collection == self.__collection_name:
-                doc_insert(self.__collection,data)  # Use former collection
+                doc_insert(self.__collection, data)  # Use former collection
                 return 'Write successfully'
             else:
-                self.__collection = col_ops(self.__database,to_collection,'G')  # Change a collection
-                doc_insert(self.__collection,data)
+                self.__collection = col_ops(
+                    self.__database, to_collection, 'G')  # Change a collection
+                doc_insert(self.__collection, data)
                 return 'Write successfully'
         else:
-            self.__database = select_db(self.__connection,to_db)  # Change a database
-            self.__collection = col_ops(self.__database,to_collection,'G')
-            doc_insert(self.__collection,data)
+            self.__database = select_db(
+                self.__connection, to_db)  # Change a database
+            self.__collection = col_ops(self.__database, to_collection, 'G')
+            doc_insert(self.__collection, data)
             return 'Write successfully'
 
-    def cut(self,sentence):
+    def cut(self, sentence):
         """
         Use jieba cut the sentence
         :param sentence: A sentence from MongoDB
@@ -71,13 +75,14 @@ class WordIO(Base):
         result = sen_cut(sentence)
         return result
 
+
 class CypherIO(Base):
     def __init__(self):
         super(CypherIO, self).__init__()
         self.__connection = BasicGraph.create_con()
         self.__session = self.__connection.session()
 
-    def run(self,model,data=None):
+    def run(self, model, data=None):
         """
         Execute Cypher query and other operations
         :param model: A Cypher model
@@ -85,11 +90,12 @@ class CypherIO(Base):
         :return: A dict result
         """
         if data:
-            result = BasicGraph.run_model(self.__session,model,data)
-            return {'result':result,'model':model,'data':data}
+            result = BasicGraph.run_model(self.__session, model, data)
+            return {'result': result, 'model': model, 'data': data}
         else:
-            result = BasicGraph.run_model(self.__session,model)
+            result = BasicGraph.run_model(self.__session, model)
             return result
+
 
 def remove_punctuation(data):
     """
@@ -119,19 +125,4 @@ def remove_punctuation(data):
         else:
             break
     return replica
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
