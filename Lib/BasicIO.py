@@ -19,7 +19,7 @@ connection and db level ops use ACTION_OBJ style func name
 file,collection and document ops use OBJ_ACTION style func name
 """
 
-CONFIG_PATH = 'config.ini'
+CONFIG_PATH = '~/Project/DumbFinance/ETL/config.ini'
 DEFAULT_SECTION = 'DB'
 
 

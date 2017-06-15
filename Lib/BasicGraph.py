@@ -2,7 +2,7 @@
 from neo4j.v1 import GraphDatabase, basic_auth
 from configparser import ConfigParser
 
-CONFIG_PATH = 'config.ini'
+CONFIG_PATH = '~/Project/DumbFinance/Feedback/config.ini'
 DB_SECTION = 'Neo4j'
 
 

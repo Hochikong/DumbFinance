@@ -1,12 +1,12 @@
 # __author__ = 'Hochikong'
-from keras.models import Sequential,load_model
+from keras.models import Sequential, load_model
 from keras.layers import Dense, Activation, Dropout, Embedding, LSTM
 from configparser import ConfigParser
 import shelve
 import numpy
 import pandas
 
-CONF_PATH = 'config.ini'
+CONF_PATH = '~/Project/DumbFinance/Model/config.ini'
 SECTION = 'Train'
 OUTPUT_DIM = 'output_dim'
 LSTM_UNITS = 'lstm_units'
@@ -81,7 +81,6 @@ class Model(Base):
         self.read_word_features = None
         self.read_word_features_set = None
 
-
     def building(self, word_features):
         # Add layers
         self.model = Sequential()
@@ -121,7 +120,6 @@ class Model(Base):
         """
         self.model.evaluate(x, y, batch_size=batch_size)
 
-
     def word_to_num(self, words, raw_words):
         """
         When all data from TrainRawData load by server, you should
@@ -148,9 +146,10 @@ class Model(Base):
                     word_features,
                     word_features_set,
                     self.__max_features))
-        return {'result': result, 'word_features': word_features,'word_features_set':word_features_set}  # No labels
+        return {'result': result, 'word_features': word_features,
+                'word_features_set': word_features_set}  # No labels
 
-    def save(self, file, word_features,word_features_set):
+    def save(self, file, word_features, word_features_set):
         """
         Save the model
         :param file: Filename
@@ -167,17 +166,21 @@ class Model(Base):
         features['data'] = tmp
         features.close()
 
-    def load(self,model, features):
+    def load(self, model, features):
         data = shelve.open(features)
         self.read_model = load_model(model)
         self.read_word_features = data['data']['word_features']
         self.read_word_features_set = data['data']['word_features_set']
 
-    def predict(self,sentence):
+    def predict(self, sentence):
         """
         You should cut the word first
         :param sentence: A list
         :return:
         """
-        tmp = translate(sentence,self.read_word_features,self.read_word_features_set,self.__max_features)
-        return self.read_model.predict_classes(tmp,verbose=0)[0][0]
+        tmp = translate(
+            sentence,
+            self.read_word_features,
+            self.read_word_features_set,
+            self.__max_features)
+        return self.read_model.predict_classes(tmp, verbose=0)[0][0]
