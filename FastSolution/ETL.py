@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from jieba import posseg, add_word, enable_parallel, load_userdict
 from configparser import ConfigParser
 from functools import reduce
+import shelve
 import pandas
 import numpy
 
@@ -80,7 +81,7 @@ if __name__ == '__main__':
     userdicts = cfg.get(NLP, 'files')
     max_features = int(cfg.get(NLP, 'max_features'))
     min_frequency = int(cfg.get(NLP, 'min_frequency'))
-    addwords = cfg.get(NLP,'addwords')
+    addwords = cfg.get(NLP, 'addwords')
 
     # load files
     filenames = []
@@ -94,7 +95,7 @@ if __name__ == '__main__':
             filenames.append(name)
     print("Set labels for these files: ", filenames)
     for name in filenames:
-        label = input("Label for {} is: ".format(name))
+        label = int(input("Label for {} is: ".format(name)))
         labels.append(label)
 
     # ops by pandas
@@ -133,23 +134,33 @@ if __name__ == '__main__':
     all_instance = all_instance.loc[idx]
 
     # X and Y
-    X = list(all_instance['numbers'])
-    for x in X:                      # 气人，前面的X里的数据虽然是list，但是list里的数据却是numpy.int64,还需要转换才能存数据库
-        p = X.index(x)
-        tmp = numpy.array(x).tolist()
-        X[p] = tmp
-    Y = list(all_instance['label'])
+    X = numpy.array(list(all_instance['numbers']))
+    tmp = []
+    for line in X:
+        tmp.append(line.tolist())   # change numpy.int64 into int
+    X = tmp
+    Y = numpy.array(list((all_instance['label']))).tolist()
     unit = zip(X, Y)
 
     # You should create a database and collection before using this program
     db = get_db(addr, port, database)
     col = get_collection(db, collection)
     document = []
-    for x, y in unit:
-        document.append({'sentence': x, 'label': int(y)})  # only use int labels
+    for w, z in unit:
+        # only use int labels
+        document.append({'sentence': w, 'label': int(z)})
 
     # Store in MongoDB
     write(col, document)
     print('Data had save in MongoDB ')
-
+    # Store word_set and number_by_frequency(features)
+    f1 = shelve.open('wordset.dat')
+    print('Word Set save in wordset.dat')
+    f1['word_set'] = word_set
+    f1.close()
+    # f2 = shelve.open('features.dat')
+    print('Features save in features.dat')
+    number_by_frequency.to_csv('features.csv')
+    # f2['number_by_frequency'] = number_by_frequency
+    # f2.close()
 
