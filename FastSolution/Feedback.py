@@ -121,3 +121,5 @@ class Analysis(object):
         result = result.reshape((1, result.shape[0]))
         predict_result = self.__model.predict(result, verbose=0)[0][0]
         print(predict_result)
+
+    def write(self,company,stock_number,basic_info):
