@@ -1,3 +1,4 @@
+# __author__ = 'Hochikong'
 from pymongo import MongoClient
 from jieba import posseg, add_word, enable_parallel, load_userdict
 from configparser import ConfigParser
@@ -63,10 +64,10 @@ def frequency_filter(pandas_instance, min_frequency):
     return word_set, number_by_frequency
 
 
-def translate(sentence_list, max_features, word_set, number_by_frequency):
+def translate(sentence_list, max_length, word_set, number_by_frequency):
     sentence_list = [w for w in sentence_list if w in word_set]
-    sentence_list = sentence_list[:max_features] + \
-        [''] * max(0, (max_features - len(sentence_list)))
+    sentence_list = sentence_list[:max_length] + \
+        [''] * max(0, (max_length - len(sentence_list)))
     return list(number_by_frequency[sentence_list])
 
 
@@ -79,7 +80,7 @@ if __name__ == '__main__':
     collection = cfg.get(SECTION, 'collection')
     userdictpath = cfg.get(NLP, 'path')
     userdicts = cfg.get(NLP, 'files')
-    max_features = int(cfg.get(NLP, 'max_features'))
+    max_length = int(cfg.get(NLP, 'max_length'))
     min_frequency = int(cfg.get(NLP, 'min_frequency'))
     addwords = cfg.get(NLP, 'addwords')
 
@@ -126,7 +127,7 @@ if __name__ == '__main__':
 
     # translate all word list to number list
     all_instance['numbers'] = all_instance['words'].apply(
-        lambda s: translate(s, max_features, word_set, number_by_frequency))
+        lambda s: translate(s, max_length, word_set, number_by_frequency))
 
     # shuffle the index
     idx = list(range(len(all_instance)))
