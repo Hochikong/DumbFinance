@@ -106,7 +106,7 @@ class Analysis(object):
         cut_result = sen_cut(sentence)
 
         # Step 2:NER
-        # ner_result = sen_ner(cut_result, 1, True)
+        ner_result = sen_ner(cut_result, 1, True)
 
         # Step3 :Translation
         result = translate(
