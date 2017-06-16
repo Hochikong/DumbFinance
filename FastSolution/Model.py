@@ -49,6 +49,7 @@ model.compile(loss=LOSS, optimizer=OPTIMIZER, metrics=[METRICS])
 
 
 if __name__ == "__main__":
+    print('Connecting to MongoDB')
     db = get_db(addr, port, database)
     col = get_collection(db, collection)
     query_result = [l for l in col.find()]  # Add lines into query_result
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     for l in query_result:
         if l['label'] in indx:
             p = indx.index(l['label'])
-            data[p].append(numpy.array(l['sentence']))  # Store,accord to indx
+            data[p].append(l['sentence'])  # Store,accord to indx
     # labels = numpy.array([l['label'] for l in query_result])
     tmpl = [l['label'] for l in query_result]  # A list only contains labels
 
@@ -81,6 +82,11 @@ if __name__ == "__main__":
         test_Y.extend(len(data[p][v:]) * [i])
     train_Y = numpy.array(train_Y)
     test_Y = numpy.array(test_Y)
+
+    train_X = numpy.array(train_X)
+    train_Y = train_Y.reshape((-1,1))
+    test_X = numpy.array(test_X)
+    test_Y = test_Y.reshape((-1,1))
 
     batch_size = int(BATCH_SIZE)
     epoch = int(EPOCH)
