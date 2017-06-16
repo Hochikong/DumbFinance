@@ -10,11 +10,11 @@ from ETL import get_db, get_collection
 import numpy
 import pandas
 
-FEATURES_FILE = 'features.csv'
 CONFIG = 'config.ini'
 SECTION = 'MODEL'
 NLP = 'NLP'
 DB = 'ETL'
+FEATURES_FILE = 'features.csv'
 
 cfg = ConfigParser()
 cfg.read(CONFIG)
