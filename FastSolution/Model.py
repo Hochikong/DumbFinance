@@ -1,14 +1,12 @@
 # __author__ = 'Hochikong'
-from keras.models import Sequential, load_model
+from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout, Embedding, LSTM
 from configparser import ConfigParser
-from random import sample
 # import os
 # import sys
 # PROJECT_PATH = os.path.abspath('.')
 # sys.path.append(PROJECT_PATH)
-from ETL import get_db,get_collection
-import shelve
+from ETL import get_db, get_collection
 import numpy
 import pandas
 
@@ -62,29 +60,33 @@ if __name__ == "__main__":
         if l['label'] in indx:
             p = indx.index(l['label'])
             data[p].append(numpy.array(l['sentence']))  # Store,accord to indx
-    labels = numpy.array([l['label'] for l in query_result])
-
+    # labels = numpy.array([l['label'] for l in query_result])
     tmpl = [l['label'] for l in query_result]  # A list only contains labels
 
-    batch_size = int(BATCH_SIZE)
     train_percent = float(TRAIN_PERCENT)
-    percent = list(map(lambda x: x * train_percent, [tmpl.count(i) for i in indx]))
-    percent = list(map(lambda x: int(x), percent))  # Choose how many lines in data you used as train data
-    unit = zip(indx,percent)
+    percent = list(map(lambda x: x * train_percent,
+                       [tmpl.count(i) for i in indx]))
+    # Choose how many lines in data you used as train data
+    percent = list(map(lambda x: int(x), percent))
+    unit = zip(indx, percent)
     train_X = []
     train_Y = []
     test_X = []
     test_Y = []
-    for i,v in unit:
+    for i, v in unit:
         p = indx.index(i)
         train_X.extend(data[p][:v])
         test_X.extend(data[p][v:])
-        train_Y.extend(len(data[p][:v])*[i])
-        test_Y.extend(len(data[p][v:])*[i])
+        train_Y.extend(len(data[p][:v]) * [i])
+        test_Y.extend(len(data[p][v:]) * [i])
     train_Y = numpy.array(train_Y)
     test_Y = numpy.array(test_Y)
 
-
-
+    batch_size = int(BATCH_SIZE)
     epoch = int(EPOCH)
     print("Fitting model...")
+    model.fit(train_X, train_Y, batch_size=batch_size, nb_epoch=epoch)
+    print("Evaluating model...")
+    model.evaluate(test_X, test_Y, batch_size=batch_size)
+    print("Saving model to mymodel.h5")
+    model.save('mymodel.h5')
