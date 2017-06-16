@@ -80,13 +80,13 @@ if __name__ == "__main__":
         test_X.extend(data[p][v:])
         train_Y.extend(len(data[p][:v]) * [i])
         test_Y.extend(len(data[p][v:]) * [i])
-    train_Y = numpy.array(train_Y)
-    test_Y = numpy.array(test_Y)
+    train_Y = numpy.array(train_Y, dtype=int)
+    test_Y = numpy.array(test_Y, dtype=int)
 
     train_X = numpy.array(train_X)
-    train_Y = train_Y.reshape((-1,1))
+    train_Y = train_Y.reshape((-1, 1))
     test_X = numpy.array(test_X)
-    test_Y = test_Y.reshape((-1,1))
+    test_Y = test_Y.reshape((-1, 1))
 
     batch_size = int(BATCH_SIZE)
     epoch = int(EPOCH)

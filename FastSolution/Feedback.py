@@ -23,9 +23,9 @@ cfg.read(CONFIG)
 
 addr = cfg.get(SECTION, 'address')
 port = cfg.get(SECTION, 'port')
-username = os.getenv('NEO4J_NAME')
-passwd = os.getenv('NEO4J_PASSWD')
-token = os.getenv('BOSON_TOKEN')
+username = cfg.get(SECTION, 'name')
+passwd = cfg.get(SECTION, 'passwd')
+token = cfg.get(SECTION, 'token')
 userdictpath = cfg.get(NLP, 'path')
 userdicts = cfg.get(NLP, 'files')
 addwords = cfg.get(NLP, 'addwords')
@@ -97,26 +97,27 @@ def sen2num(result):
 class Analysis(object):
     def __init__(self):
         self.__model = load_model('mymodel.h5')
-        self.__driver = GraphDatabase.driver("bolt://{}:{}".format(addr,port),auth=basic_auth(username,passwd))
+        self.__driver = GraphDatabase.driver(
+            "bolt://{}:{}".format(addr, port), auth=basic_auth(username, passwd))
         self.__session = self.__driver.session()
 
-    def analysis(self,sentence):
+    def analysis(self, sentence):
         # Step 1:Cut the word
         cut_result = sen_cut(sentence)
 
         # Step 2:NER
-        ner_result = sen_ner(cut_result, 1, True)
+        # ner_result = sen_ner(cut_result, 1, True)
 
         # Step3 :Translation
-        result = translate(cut_result[0]['word'], max_length, word_set, features)
+        result = translate(
+            cut_result[0]['word'],
+            max_length,
+            word_set,
+            features)
         result = sen2num(result)
+        result = numpy.array(result, dtype=int)
 
         # Step3:Sentiment analysis
         result = result.reshape((1, result.shape[0]))
-        self.__model.predict(result,verbose=0)
-
-
-
-
-
-
+        predict_result = self.__model.predict(result, verbose=0)[0][0]
+        print(predict_result)
