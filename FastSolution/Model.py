@@ -1,7 +1,11 @@
 # __author__ = 'Hochikong'
+from __future__ import absolute_import
+from __future__ import print_function
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout, Embedding, LSTM
+from keras.utils import plot_model
 from configparser import ConfigParser
+import matplotlib.pyplot as plt
 # import os
 # import sys
 # PROJECT_PATH = os.path.abspath('.')
@@ -33,6 +37,7 @@ METRICS = cfg.get(SECTION, 'metrics')
 BATCH_SIZE = cfg.get(SECTION, 'batch_size')
 TRAIN_PERCENT = cfg.get(SECTION, 'train_percent')
 EPOCH = cfg.get(SECTION, 'epoch')
+VALIDATION_SPLIT = cfg.get(SECTION, 'validation_split')
 
 addr = cfg.get(DB, 'address')
 port = int(cfg.get(DB, 'port'))
@@ -91,8 +96,30 @@ if __name__ == "__main__":
     batch_size = int(BATCH_SIZE)
     epoch = int(EPOCH)
     print("Fitting model...")
-    model.fit(train_X, train_Y, batch_size=batch_size, nb_epoch=epoch)
+    log = model.fit(train_X, train_Y, batch_size=batch_size, nb_epoch=epoch, validation_split=float(VALIDATION_SPLIT))
     print("Evaluating model...")
     model.evaluate(test_X, test_Y, batch_size=batch_size)
+
+    plt.figure(facecolor='white')
+
+    plt.subplot(2, 1, 1)
+    plt.plot(log.history['acc'], 'b-', label='Training Accuracy')
+    plt.plot(log.history['val_acc'], 'r-', label='Validation Accuracy')
+    plt.legend(loc='best')
+    plt.xlabel('Epochs')
+    plt.axis([0, epoch, 0.9, 1])
+
+    plt.subplot(2, 1, 2)
+    plt.plot(log.history['loss'], 'b-', label='Training Loss')
+    plt.plot(log.history['val_loss'], 'r-', label='Validation Loss')
+    plt.legend(loc='best')
+    plt.xlabel('Epochs')
+    plt.axis([0, epoch, 0, 1])
+
+    # plt.show()
+    print("Saving photo to statistics.png ")
+    plt.savefig('statistics.png')
     print("Saving model to mymodel.h5")
     model.save('mymodel.h5')
+    print("Saving graph to mymodel.png")
+    plot_model(model, to_file='mymodel.png')
