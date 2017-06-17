@@ -4,7 +4,7 @@ QUERY_FOR_FRIENDS = "MATCH (n1:Person)-[f:Friend]->(n2:Person) RETURN n1,f,n2"
 
 # Fix Models
 # Example:CREATE (:STOCK {Company:'京东方',StockNumber:'000725',BasicInfo:'xxx'})
-CREATE_CORE_NODE = "CREATE (:STOCK {Company:{%s},StockNumber:{%s},BasicInfo:{%s}})"
+CREATE_CORE_NODE = "CREATE (:STOCK {Company:{company},StockNumber:{stocknumber},BasicInfo:{%s}})"
 
 # Example:MATCH (s:STOCK) WHERE s.StockNumber = '000725' CREATE (n:Related {Company:'某公司'})-[r:竞争对手]->(s)
 CREATE_BASIC_STRUCTURE_FROM = "MATCH (s:STOCK) WHERE s.StockNumber = {%s} " \

@@ -9,7 +9,6 @@ from ETL import translate
 import numpy
 import shelve
 import pandas
-import os
 
 CONFIG = 'config.ini'
 NLP = 'NLP'
@@ -100,13 +99,32 @@ class Analysis(object):
         self.__driver = GraphDatabase.driver(
             "bolt://{}:{}".format(addr, port), auth=basic_auth(username, passwd))
         self.__session = self.__driver.session()
+        self.__div = float(cfg.get(SECTION, 'div'))
+        self.bigger = cfg.get(SECTION, 'bigger')
+        self.smaller = cfg.get(SECTION, 'smaller')
 
-    def analysis(self, sentence):
+    def analysis(self, text, time, stock_number):
+        CREATE_FACTOR = "MATCH (s:STOCK) WHERE s.StockNumber = {stock_number} " \
+                        "CREATE (n:EVENT {TEXT:{text},KEYWORDS:{keywords}})-[f:%s]->(s)"
+
+        CREATE_TIME = "MATCH (s:STOCK) WHERE s.StockNumber = {stock_number} " \
+                      "CREATE (:TIME {TIME:{time}})-[t:时间]->(s)"   # '2017-06-15,01:41'
+
+        QUERY_FOR_FACTORS = "MATCH (n)-[f]->(s:STOCK {StockNumber:%s})<-[t:%s]-(tn) RETURN n,f,s,t,tn"
+
+        # QUERY_FOR_TYPE_STRUCTURE = "MATCH (n)-[r:%]->(s:STOCK {StockNumber:'xxx'}) RETURN n,r,s"
+
+        QUERY_FOR_STRUCTURE = "MATCH (n)-[r]->(s:STOCK {StockNumber:%s})-[rx]->(nx) RETURN n,r,s,rx,nx"
+
         # Step 1:Cut the word
-        cut_result = sen_cut(sentence)
+        cut_result = sen_cut(text)
 
         # Step 2:NER
         ner_result = sen_ner(cut_result, 1, True)
+        entities = []
+        for i in ner_result[0]['entity'][0]:
+            if isinstance(i, int):
+                entities.append(ner_result[0]['word'][i])
 
         # Step3 :Translation
         result = translate(
@@ -120,6 +138,50 @@ class Analysis(object):
         # Step3:Sentiment analysis
         result = result.reshape((1, result.shape[0]))
         predict_result = self.__model.predict(result, verbose=0)[0][0]
-        print(predict_result)
+        if predict_result > self.__div:
+            factor = self.bigger
+        else:
+            factor = self.smaller
 
-    def write(self,company,stock_number,basic_info):
+        self.__session.run(
+            CREATE_TIME, {
+                'stock_number': stock_number, 'time': time})
+        self.__session.run(CREATE_FACTOR % factor,
+                           {'stock_number': stock_number,
+                            'text': text,
+                            'keywords': entities})
+        print('Result: ' + predict_result)
+        print('Use this cypher query check all factors by time: ' +
+              QUERY_FOR_FACTORS % (stock_number, time))
+        print(
+            'Use this cypher query check all relations: ' +
+            QUERY_FOR_STRUCTURE %
+            stock_number)
+
+    def writeCore(self, company, stock_number, basic_info):
+        CREATE_CORE_NODE = "CREATE (:STOCK {Company:{company},StockNumber:{stock_number},BasicInfo:{basic_info}})"
+        self.__session.run(CREATE_CORE_NODE,
+                           {'company': company,
+                            'stock_number': stock_number,
+                            'basic_info': basic_info})
+
+    def cleanall(self):
+        # MATCH (n) DETACH DELETE n
+        self.__session.run('MATCH (n) DETACH DELETE n')
+
+    def writeC2O(self, stock_number, relation, other_company):
+        CREATE_BASIC_STRUCTURE_TO = "MATCH (s:STOCK) WHERE s.StockNumber = {stock_number} " \
+                                    "CREATE (s)-[r:%s]->(n:Related {Company:{other_company}})"
+        self.__session.run(CREATE_BASIC_STRUCTURE_TO % relation,
+                           {'stock_number': stock_number,
+                            'other_company': other_company})
+
+    def writeO2C(self, stock_number, relation, other_company):
+        CREATE_BASIC_STRUCTURE_FROM = "MATCH (s:STOCK) WHERE s.StockNumber = {stock_number} " \
+                                      "CREATE (n:Related {Company:{other_company}})-[r:%s]->(s)"
+        self.__session.run(CREATE_BASIC_STRUCTURE_FROM % relation,
+                           {'stock_number': stock_number,
+                            'other_company': other_company})
+
+    def browser(self):
+        launch_browser(addr, port)
