@@ -105,26 +105,31 @@ class Analysis(object):
 
     def analysis(self, text, time, stock_number):
         CREATE_FACTOR = "MATCH (s:STOCK) WHERE s.StockNumber = {stock_number} " \
-                        "CREATE (n:EVENT {TEXT:{text},KEYWORDS:{keywords}})-[f:%s]->(s)"
+                        "CREATE (n:EVENT {FACTOR:{factor},TEXT:{text},KEYWORDS:{keywords}})-[f:%s]->(s)"
 
         CREATE_TIME = "MATCH (s:STOCK) WHERE s.StockNumber = {stock_number} " \
                       "CREATE (:TIME {TIME:{time}})-[t:时间]->(s)"   # '2017-06-15,01:41'
 
-        QUERY_FOR_FACTORS = "MATCH (n)-[f]->(s:STOCK {StockNumber:%s})<-[t:%s]-(tn) RETURN n,f,s,t,tn"
+        QUERY_FOR_FACTORS = "MATCH (n)-[f]->(s:STOCK {StockNumber:'%s'})<-[t:时间]-(tn) RETURN n,f,s,t,tn"
 
         # QUERY_FOR_TYPE_STRUCTURE = "MATCH (n)-[r:%]->(s:STOCK {StockNumber:'xxx'}) RETURN n,r,s"
 
-        QUERY_FOR_STRUCTURE = "MATCH (n)-[r]->(s:STOCK {StockNumber:%s})-[rx]->(nx) RETURN n,r,s,rx,nx"
+        QUERY_FOR_STRUCTURE = "MATCH (n)-[r]->(s:STOCK {StockNumber:'%s'})-[rx]->(nx) RETURN n,r,s,rx,nx"
 
         # Step 1:Cut the word
         cut_result = sen_cut(text)
 
-        # Step 2:NER
+        # Step 2:NER or Find keywords
         ner_result = sen_ner(cut_result, 1, True)
         entities = []
-        for i in ner_result[0]['entity'][0]:
-            if isinstance(i, int):
-                entities.append(ner_result[0]['word'][i])
+        if ner_result[0]['entity']:
+            for i in ner_result[0]['entity'][0]:
+                if type(i) == int:
+                    entities.append(ner_result[0]['word'][i])
+        else:
+            keywords = nlp.extract_keywords(text, top_k=5)
+            for weight, word in keywords:
+                entities.append(word)
 
         # Step3 :Translation
         result = translate(
@@ -148,11 +153,12 @@ class Analysis(object):
                 'stock_number': stock_number, 'time': time})
         self.__session.run(CREATE_FACTOR % factor,
                            {'stock_number': stock_number,
+                            'factor': float(predict_result),
                             'text': text,
                             'keywords': entities})
-        print('Result: ' + predict_result)
+        print('Result: ', predict_result)
         print('Use this cypher query check all factors by time: ' +
-              QUERY_FOR_FACTORS % (stock_number, time))
+              QUERY_FOR_FACTORS % stock_number)
         print(
             'Use this cypher query check all relations: ' +
             QUERY_FOR_STRUCTURE %
@@ -184,4 +190,4 @@ class Analysis(object):
                             'other_company': other_company})
 
     def browser(self):
-        launch_browser(addr, port)
+        launch_browser(addr, passwd, port='7474')

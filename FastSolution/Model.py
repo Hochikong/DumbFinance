@@ -107,7 +107,7 @@ if __name__ == "__main__":
     plt.plot(log.history['val_acc'], 'r-', label='Validation Accuracy')
     plt.legend(loc='best')
     plt.xlabel('Epochs')
-    plt.axis([0, epoch, 0.9, 1])
+    plt.axis([0, epoch, 0, 1])
 
     plt.subplot(2, 1, 2)
     plt.plot(log.history['loss'], 'b-', label='Training Loss')
