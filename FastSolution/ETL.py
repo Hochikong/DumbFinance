@@ -160,7 +160,7 @@ if __name__ == '__main__':
     f1['word_set'] = word_set
     f1.close()
     # f2 = shelve.open('features.dat')
-    print('Features save in features.dat')
+    print('Features save in features.csv')
     number_by_frequency.to_csv('features.csv')
     # f2['number_by_frequency'] = number_by_frequency
     # f2.close()

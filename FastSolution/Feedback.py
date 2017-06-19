@@ -99,16 +99,18 @@ class Analysis(object):
         self.__driver = GraphDatabase.driver(
             "bolt://{}:{}".format(addr, port), auth=basic_auth(username, passwd))
         self.__session = self.__driver.session()
-        self.__div = float(cfg.get(SECTION, 'div'))
+        self.__div_t = float(cfg.get(SECTION, 'div_t'))
+        self.__div_b = float(cfg.get(SECTION, 'div_b'))
         self.bigger = cfg.get(SECTION, 'bigger')
         self.smaller = cfg.get(SECTION, 'smaller')
 
     def analysis(self, text, time, stock_number):
         CREATE_FACTOR = "MATCH (s:STOCK) WHERE s.StockNumber = {stock_number} " \
-                        "CREATE (n:EVENT {FACTOR:{factor},TEXT:{text},KEYWORDS:{keywords}})-[f:%s]->(s)"
+                        "CREATE (:TIME {TIME:{time}})-[t:时间]->(n:EVENT {FACTOR:{factor}," \
+                        "TEXT:{text},KEYWORDS:{keywords}})-[f:%s]->(s)"
 
-        CREATE_TIME = "MATCH (s:STOCK) WHERE s.StockNumber = {stock_number} " \
-                      "CREATE (:TIME {TIME:{time}})-[t:时间]->(s)"   # '2017-06-15,01:41'
+        # CREATE_TIME = "MATCH (s:STOCK) WHERE s.StockNumber = {stock_number} " \
+                      # "CREATE (:TIME {TIME:{time}})-[t:时间]->(s)"   # '2017-06-15,01:41'
 
         QUERY_FOR_FACTORS = "MATCH (n)-[f]->(s:STOCK {StockNumber:'%s'})<-[t:时间]-(tn) RETURN n,f,s,t,tn"
 
@@ -143,26 +145,29 @@ class Analysis(object):
         # Step3:Sentiment analysis
         result = result.reshape((1, result.shape[0]))
         predict_result = self.__model.predict(result, verbose=0)[0][0]
-        if predict_result > self.__div:
+        if predict_result > self.__div_t:
             factor = self.bigger
-        else:
+        if predict_result < self.__div_b:
             factor = self.smaller
+        if self.__div_t >= predict_result >= self.__div_b:
+            factor = 'Undetermined'
 
-        self.__session.run(
-            CREATE_TIME, {
-                'stock_number': stock_number, 'time': time})
+        # self.__session.run(
+        #     CREATE_TIME, {
+        #         'stock_number': stock_number, 'time': time})
         self.__session.run(CREATE_FACTOR % factor,
-                           {'stock_number': stock_number,
+                           {'time': time,
+                            'stock_number': stock_number,
                             'factor': float(predict_result),
                             'text': text,
                             'keywords': entities})
         print('Result: ', predict_result)
-        print('Use this cypher query check all factors by time: ' +
-              QUERY_FOR_FACTORS % stock_number)
-        print(
-            'Use this cypher query check all relations: ' +
-            QUERY_FOR_STRUCTURE %
-            stock_number)
+        # print('Use this cypher query check all factors by time: ' +
+              # QUERY_FOR_FACTORS % stock_number)
+        # print(
+            # 'Use this cypher query check all relations: ' +
+            # QUERY_FOR_STRUCTURE %
+            # stock_number)
 
     def writeCore(self, company, stock_number, basic_info):
         CREATE_CORE_NODE = "CREATE (:STOCK {Company:{company},StockNumber:{stock_number},BasicInfo:{basic_info}})"
